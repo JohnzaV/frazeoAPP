@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#111a1c">
+  <meta name="description" content="Statický radarový trénink anglické ATC frazeologie. Přílety do Prahy, skutečné body AIP, vlastní rozhodnutí.">
+  <title>PRG · Phraseology Lab</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+  <script src="data.js" defer></script>
+  <script src="engine.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="masthead">
+      <a class="brand" href="./" aria-label="Phraseology Lab, začátek"><span class="brand-mark" aria-hidden="true">✳</span><span>PRG<span class="brand-divider">/</span><strong>PHRASEOLOGY LAB</strong><small>ACC → APP · PRAHA / RUZYNĚ</small></span></a>
+      <div class="header-status"><span class="live-dot"></span>SNAPSHOT MODE<span class="header-separator"></span><span id="session-number">SESSION 01</span></div>
+      <div class="header-actions"><button id="help-button" class="button subtle" title="Přehled frází a ovládání (F1)">Přehled frází <kbd>F1</kbd></button><button id="new-session" class="button">Nová relace <span aria-hidden="true">↗</span></button></div>
+    </header>
+
+    <main class="workspace">
+      <section class="radar-column" aria-label="Radar a řízení">
+        <div class="radar-toolbar">
+          <div class="sector-label"><span class="tiny-square"></span><strong id="sector">PRAHA RADAR</strong><span id="phase-label">ACC</span></div>
+          <div class="layer-controls" aria-label="Mapové vrstvy">
+            <label><input type="checkbox" id="layer-tma" checked><span>TMA</span></label>
+            <label><input type="checkbox" id="layer-fixes" checked><span>BODY</span></label>
+            <label><input type="checkbox" id="layer-rnav" checked><span>PR</span></label>
+            <label><input type="checkbox" id="layer-star" checked><span>STAR</span></label>
+            <label><input type="checkbox" id="layer-traffic" checked><span>TRAF</span></label>
+          </div>
+          <div class="map-controls"><button id="zoom-out" title="Oddálit" aria-label="Oddálit">−</button><span id="range-label">60 NM</span><button id="zoom-in" title="Přiblížit" aria-label="Přiblížit">+</button><button id="center-map" title="Přizpůsobit aktuální situaci" aria-label="Přizpůsobit mapu">⌖</button></div>
+        </div>
+        <div class="radar-wrap" id="radar-wrap">
+          <svg id="radar" viewBox="0 0 1000 680" role="img" aria-labelledby="radar-title radar-desc">
+            <title id="radar-title">Radarová mapa TMA Praha</title>
+            <desc id="radar-desc">Reálné body a hranice podle AIP ČR. Kliknutím na label aktivního letadla vložíš jeho callsign. Mapa se posouvá tažením a přibližuje kolečkem.</desc>
+          </svg>
+          <div class="radar-corner top-left"><span>LKAA / LKPR</span><strong>RWY <b>24</b></strong><span id="snapshot-label">SNAPSHOT 001</span></div>
+          <div class="radar-corner top-right" aria-hidden="true"><span class="north-arrow">↑</span><strong>N</strong><span>MAG VAR 5°E</span></div>
+          <div class="radar-corner bottom-left"><span><i class="legend-active"></i> NA SPOJENÍ</span><span><i class="legend-passive"></i> OSTATNÍ PROVOZ</span></div>
+          <div class="radar-corner bottom-right"><span id="scale-label">10 NM</span><div class="scale-bar"></div><span>AIP ČR · 30 OCT 2026</span></div>
+          <div id="map-tooltip" class="map-tooltip" hidden></div>
+          <div id="completion" class="completion" hidden><span class="completion-check">✓</span><span><strong>Předáno věži.</strong><small id="completion-text">RUZYNĚ TOWER · 134.560</small></span><button id="next-flight" class="button primary">Další přílet <span aria-hidden="true">→</span></button></div>
+        </div>
+        <section class="strip-bay" aria-label="Letový strip">
+          <div class="bay-heading"><span>FLIGHT STRIP</span><span id="flight-number">ARRIVAL 01</span><span id="strip-phase" class="strip-phase">FIRST CONTACT</span></div>
+          <button id="flight-strip" class="flight-strip" aria-label="Vybrat letadlo a vložit callsign">
+            <span class="strip-identity"><strong id="strip-call"></strong><small><span id="strip-type"></span> / <span id="strip-wake"></span> · <span id="strip-squawk"></span></small></span>
+            <span class="strip-airports"><strong id="strip-origin"></strong><span>→ LKPR <b>24</b></span></span>
+            <span class="strip-level"><small>LEVEL / CLEARED</small><strong id="strip-level"></strong><span id="strip-cleared"></span></span>
+            <span class="strip-route"><small>ARRIVAL / NEXT</small><strong id="strip-route"></strong><span id="strip-target"></span></span>
+            <span class="strip-remark"><span id="strip-ident"></span><span id="strip-atis"></span><span id="strip-ils"></span></span>
+            <span class="strip-select" aria-hidden="true">↵</span>
+          </button>
+        </section>
+        <section class="comms-console" aria-label="Odeslání radiové zprávy">
+          <div class="console-top"><span><i class="console-dot"></i>CONTROLLER TRANSMISSION</span><div><button id="undo" disabled title="Vrátit poslední přijatou zprávu" aria-label="Vrátit poslední přijatou zprávu">↶ Zpět</button><button id="clear-input" title="Vymazat zprávu (Escape)">Vymazat <kbd>ESC</kbd></button></div></div>
+          <form id="radio-form" autocomplete="off">
+            <span class="prompt" aria-hidden="true">›</span>
+            <input id="transmission" aria-label="Anglická zpráva letadlu" spellcheck="false" autocapitalize="off" autocorrect="off" maxlength="600" placeholder="Klikni na strip nebo label a napiš zprávu…">
+            <button type="submit" class="transmit-button">TRANSMIT <kbd>↵</kbd></button>
+          </form>
+          <div id="feedback" class="feedback" role="status" aria-live="polite"><span class="feedback-icon">↳</span><span>Volíš postup. Každá přijatá zpráva posune situaci o jeden snímek.</span></div>
+        </section>
+        <footer class="radar-footer"><span>ENGLISH R/T · L FRAZEOLOGIE</span><span id="accuracy">0 PŘIJATÝCH ZPRÁV</span><button id="source-button">Podklady a rozsah ↗</button></footer>
+      </section>
+
+      <aside class="right-column" aria-label="Letištní informace a radiový provoz">
+        <section class="atis-panel">
+          <div class="panel-heading"><span>AERODROME INFORMATION</span><span class="frequency">122.160</span></div>
+          <div class="atis-title"><div><span>LKPR</span><h1>Ruzyně ATIS</h1></div><div class="atis-letter"><span>INFO</span><strong id="atis-letter">B</strong></div></div>
+          <div class="atis-grid">
+            <div><span>RWY IN USE</span><strong>24 <small>ILS</small></strong></div>
+            <div><span>QNH <small>hPa</small></span><strong id="atis-qnh"></strong></div>
+            <div><span>TRANSITION LEVEL</span><strong id="atis-tl"></strong></div>
+            <div><span>TRANSITION ALT</span><strong>5000 <small>ft</small></strong></div>
+          </div>
+          <div class="weather-line"><span id="atis-wind"></span><span id="atis-weather"></span></div>
+          <details class="atis-details"><summary>Úplné hlášení ATIS <span>⌄</span></summary><p id="atis-full"></p></details>
+          <div class="atis-synthetic"><span class="tiny-square"></span>Vygenerované podmínky pro tuto relaci</div>
+        </section>
+
+        <section class="radio-panel" aria-label="Radiová komunikace">
+          <div class="panel-heading radio-heading"><span>RADIO TRANSCRIPT</span><span id="radio-freq" class="frequency">127.580</span></div>
+          <div class="radio-subhead"><span><i class="live-dot"></i> PRAHA RADAR</span><span id="exchange-count">00 EXCHANGES</span></div>
+          <div id="radio-log" class="radio-log" aria-live="polite" aria-relevant="additions"></div>
+          <div class="radio-bottom"><span>TEXT R/T</span><span>ŽÁDNÝ ČASOVÝ LIMIT</span></div>
+        </section>
+      </aside>
+    </main>
+  </div>
+
+  <dialog id="reference-dialog" class="reference-dialog">
+    <div class="dialog-header"><div><span class="eyebrow">PHRASEOLOGY LAB / REFERENCE</span><h2 id="dialog-title">Po ruce, když potřebuješ.</h2></div><button id="close-dialog" class="close-dialog" aria-label="Zavřít">×</button></div>
+    <div class="dialog-tabs"><button id="tab-phrases" class="active">Fráze</button><button id="tab-controls">Ovládání</button><button id="tab-sources">Podklady a rozsah</button></div>
+    <div id="dialog-body" class="dialog-body"></div>
+  </dialog>
+  <noscript>Pro spuštění hry povol JavaScript. Hra pracuje celá v prohlížeči.</noscript>
+</body>
+</html>

@@ -1,0 +1,1 @@
+{"name":"prg-phraseology-lab","version":"1.0.0","private":true,"description":"Buildless ATC phraseology snapshot trainer for GitHub Pages","scripts":{"test":"node --test tests/engine.test.cjs"}}
